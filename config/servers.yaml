@@ -1,0 +1,12 @@
+servers:
+  local:
+    host: 127.0.0.1
+    port: 22
+    user: root
+    key_path: /root/.ssh/id_rsa  # 你服务器的SSH私钥路径
+  # 以后你有第二台服务器，就在这里加：
+  # web1:
+  #   host: 1.2.3.4
+  #   port: 22
+  #   user: root
+  #   key_path: /root/.ssh/id_rsa
