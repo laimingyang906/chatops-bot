@@ -5,6 +5,7 @@
 ---------------------架构设计----------------------------
 
 
+
 [ 钉钉移动端/PC端 ] <--- (WebSocket 长连接) ---> [ 阿里云服务器 (Python程序) ]
                                                      
                                                         |
@@ -45,7 +46,7 @@
 
 ![危险操作确认]
 
-<img width="920" height="771" alt="389111f28fb901af38fd5eb10e8681e" src="https://github.com/user-attachments/assets/4f012d64-25fe-40b0-ab22-d6df1ce0b384" />
+<img width="92" height="77" alt="389111f28fb901af38fd5eb10e8681e" src="https://github.com/user-attachments/assets/4f012d64-25fe-40b0-ab22-d6df1ce0b384" />
 
 ![主动告警]
 
@@ -54,7 +55,7 @@
 
 ![审计日志]
 
-<img width="912" height="845" alt="8ee0dfdff5cc251853f9499a1de7765" src="https://github.com/user-attachments/assets/2ca5b348-fa99-42cd-89d8-bd312094a996" />
+<img width="91" height="84" alt="8ee0dfdff5cc251853f9499a1de7765" src="https://github.com/user-attachments/assets/2ca5b348-fa99-42cd-89d8-bd312094a996" />
 
 ----------------------快速部署------------------
 1. 环境准备
