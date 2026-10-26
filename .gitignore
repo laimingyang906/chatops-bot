@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 chatops.db
 config/users.yaml
+.env

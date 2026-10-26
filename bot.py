@@ -1,6 +1,4 @@
-import dingtalk_stream
 import logging
-import subprocess
 import shlex
 import paramiko
 import yaml
@@ -14,15 +12,22 @@ import hashlib
 import base64
 import urllib.parse
 from datetime import datetime
+from dotenv import load_dotenv
+import dingtalk_stream
+
+# 加载环境变量（必须在读取变量之前）
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 
 pending_actions = {}
 
-# ================= 告警配置区（必须替换） =================
-WEBHOOK_URL = "https://oapi.dingtalk.com/robot/send?access_token=6367f6b0acf8da0f29340c1e0b54e267685ef5a4534dd7cec394d7e219121363"
-WEBHOOK_SECRET = "SECbaf4c528a4574262fd13548e310edcde165e2a35b220c0bdcfab3d5093d98bc7"
-# ==========================================================
+# ================= 配置区 =================
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+# ==========================================
 
 last_alert_time = 0
 
@@ -82,10 +87,10 @@ def log_action(user_id, command, result):
     conn.commit()
     conn.close()
 
-# ================= 新增：主动告警模块 =================
+# ================= 主动告警模块 =================
 def send_alert(msg):
     global last_alert_time
-    # 告警冷却：10分钟内只发一次（防止消息轰炸）
+    # 告警冷却：10分钟内只发一次
     if time.time() - last_alert_time < 600:
         return
     last_alert_time = time.time()
@@ -95,7 +100,6 @@ def send_alert(msg):
         return
 
     try:
-        # 钉钉加签计算
         timestamp = str(round(time.time() * 1000))
         string_to_sign = f'{timestamp}\n{WEBHOOK_SECRET}'
         hmac_code = hmac.new(WEBHOOK_SECRET.encode(), string_to_sign.encode(), digestmod=hashlib.sha256).digest()
@@ -110,25 +114,21 @@ def send_alert(msg):
 def health_checker():
     print("后台健康检查线程已启动...")
     while True:
-        time.sleep(30) # 每30秒检查一次
+        time.sleep(30)
         servers = load_servers()
         for name, srv in servers.items():
-            # 检查磁盘使用率
             out = ssh_exec(srv, "df -h / | tail -1 | awk '{print $5}'")
-            
-            # 如果 SSH 连不上（比如服务器宕机了）
             if "SSH连接失败" in out or "执行报错" in out:
                 send_alert(f"服务器 [{name}] 无法通过SSH连接！")
                 continue
-                
             try:
                 usage = int(out.strip().replace('%', ''))
                 if usage > 90:
                     send_alert(f"服务器 [{name}] 磁盘使用率过高：{usage}%！请及时清理。")
             except:
                 pass
-# ====================================================
 
+# ================= 机器人核心逻辑 =================
 class MyBot(dingtalk_stream.ChatbotHandler):
     async def process(self, callback: dingtalk_stream.CallbackMessage):
         incoming = dingtalk_stream.ChatbotMessage.from_dict(callback.data)
@@ -233,13 +233,12 @@ class MyBot(dingtalk_stream.ChatbotHandler):
 def main():
     init_db()
     
-    # ================= 新增：启动后台监控线程 =================
     t = threading.Thread(target=health_checker, daemon=True)
     t.start()
-    # ==========================================================
 
-    CLIENT_ID = "ding5tlttjdrpoc9oejv"       # 记得替换
-    CLIENT_SECRET = "6N9OtvQU0rpdbNR1BwfJ5R2jb3bFeM7Crdvd93gE6-7MXFFK_DAaZJzjqsXigdY8" # 记得替换
+    if not CLIENT_ID or not CLIENT_SECRET:
+        print("错误：未找到 CLIENT_ID 或 CLIENT_SECRET，请检查 .env 文件！")
+        return
 
     credential = dingtalk_stream.Credential(CLIENT_ID, CLIENT_SECRET)
     client = dingtalk_stream.DingTalkStreamClient(credential)
